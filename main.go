@@ -2,20 +2,25 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
+	"time"
 )
 
-const httpPort = ":8081"
+const httpPort = ":8080"
+
+const accessSecret = "access_secret_string"
+const accessLifetimeMinutes = 5
 
 func main() {
-	http.HandleFunc("/login", login)
+	http.HandleFunc("/login", Login)
 
 	log.Fatal(http.ListenAndServe(httpPort, nil))
 }
 
-func login(w http.ResponseWriter, r *http.Request) {
+func Login(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		req := new(LoginRequest)
@@ -35,7 +40,23 @@ func login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"id":  user.ID,
+			"exp": time.Now().Add(accessLifetimeMinutes * time.Minute).Unix(),
+		})
+
+		tokenString, err := token.SignedString([]byte(accessSecret))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		resp := LoginResponse{
+			AccessToken: tokenString,
+		}
+
 		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(resp)
 	default:
 		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
 	}
