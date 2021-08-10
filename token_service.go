@@ -4,11 +4,24 @@ import (
 	"errors"
 	"github.com/golang-jwt/jwt"
 	"strings"
+	"time"
 )
 
 type JwtCustomClaims struct {
 	ID int `json:"id"`
 	jwt.StandardClaims
+}
+
+func GenerateToken(userID, lifetimeMinutes int, secret string) (string, error) {
+	claims := &JwtCustomClaims{
+		userID,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Minute * time.Duration(lifetimeMinutes)).Unix(),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return token.SignedString([]byte(secret))
 }
 
 func ValidateBearerToken(authHeader string) (*JwtCustomClaims, error) {

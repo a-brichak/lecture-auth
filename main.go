@@ -2,17 +2,20 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
-	"time"
 )
 
-const httpPort = ":8080"
+const (
+	httpPort = ":8080"
 
-const accessSecret = "access_secret_string"
-const accessLifetimeMinutes = 5
+	accessSecret = "access_secret_string"
+	refreshSecret = "refresh_secret_string"
+
+	accessLifetimeMinutes = 5
+	refreshLifetimeMinutes = 60
+)
 
 func main() {
 	http.HandleFunc("/login", Login)
@@ -41,22 +44,21 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		claims := &JwtCustomClaims{
-			user.ID,
-			jwt.StandardClaims{
-				ExpiresAt: time.Now().Add(accessLifetimeMinutes * time.Minute).Unix(),
-			},
+		accessString, err := GenerateToken(user.ID, accessLifetimeMinutes, accessSecret)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-		tokenString, err := token.SignedString([]byte(accessSecret))
+		refreshString, err := GenerateToken(user.ID, refreshLifetimeMinutes, refreshSecret)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		resp := LoginResponse{
-			AccessToken: tokenString,
+			AccessToken:  accessString,
+			RefreshToken: refreshString,
 		}
 
 		w.WriteHeader(http.StatusOK)
