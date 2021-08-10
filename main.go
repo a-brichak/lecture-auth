@@ -40,10 +40,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"id":  user.ID,
-			"exp": time.Now().Add(accessLifetimeMinutes * time.Minute).Unix(),
-		})
+		claims := &JwtCustomClaims{
+			user.ID,
+			jwt.StandardClaims{
+				ExpiresAt: time.Now().Add(accessLifetimeMinutes * time.Minute).Unix(),
+			},
+		}
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 		tokenString, err := token.SignedString([]byte(accessSecret))
 		if err != nil {
