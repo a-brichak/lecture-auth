@@ -16,6 +16,7 @@ const accessLifetimeMinutes = 5
 
 func main() {
 	http.HandleFunc("/login", Login)
+	http.HandleFunc("/profile", GetProfile)
 
 	log.Fatal(http.ListenAndServe(httpPort, nil))
 }
@@ -62,5 +63,33 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(resp)
 	default:
 		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func GetProfile(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		claims, err := ValidateBearerToken(r.Header.Get("Authorization"))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		user, err := NewUserRepository().GetUserByID(claims.ID)
+		if err != nil {
+			http.Error(w, "User does not exist", http.StatusBadRequest)
+			return
+		}
+
+		resp := UserResponse{
+			ID:    user.ID,
+			Name:  user.Name,
+			Email: user.Email,
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(resp)
+	default:
+		http.Error(w, "Only GET method is allowed", http.StatusMethodNotAllowed)
 	}
 }

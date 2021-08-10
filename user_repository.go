@@ -7,6 +7,7 @@ import (
 
 type IUserRepository interface {
 	GetUserByEmail(email string) (*User, error)
+	GetUserByID(id int) (*User, error)
 }
 
 type UserRepository struct {
@@ -19,13 +20,15 @@ func NewUserRepository() IUserRepository {
 
 	users := []*User{
 		&User{
-			ID: 1,
-			Email: "alex@example.com",
+			ID:       1,
+			Email:    "alex@example.com",
+			Name:     "Alex",
 			Password: string(p1),
 		},
 		&User{
-			ID: 2,
-			Email: "mary@example.com",
+			ID:       2,
+			Email:    "mary@example.com",
+			Name:     "Mary",
 			Password: string(p2),
 		},
 	}
@@ -36,6 +39,16 @@ func NewUserRepository() IUserRepository {
 func (r *UserRepository) GetUserByEmail(email string) (*User, error) {
 	for _, user := range r.users {
 		if user.Email == email {
+			return user, nil
+		}
+	}
+
+	return nil, errors.New("user not found")
+}
+
+func (r *UserRepository) GetUserByID(id int) (*User, error) {
+	for _, user := range r.users {
+		if user.ID == id {
 			return user, nil
 		}
 	}
