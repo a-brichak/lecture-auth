@@ -2,16 +2,12 @@ package services
 
 import (
 	"auth/config"
+	"auth/helper"
 	"errors"
 	"github.com/golang-jwt/jwt"
 	"strings"
 	"time"
 )
-
-type JwtCustomClaims struct {
-	ID int `json:"id"`
-	jwt.StandardClaims
-}
 
 type TokenService struct {
 	cfg *config.Config
@@ -32,7 +28,7 @@ func (s *TokenService) GenerateRefreshToken(userID int) (string, error) {
 }
 
 func (s *TokenService) generateToken(userID, lifetimeMinutes int, secret string) (string, error) {
-	claims := &JwtCustomClaims{
+	claims := &helper.JwtCustomClaims{
 		userID,
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Minute * time.Duration(lifetimeMinutes)).Unix(),
@@ -43,23 +39,23 @@ func (s *TokenService) generateToken(userID, lifetimeMinutes int, secret string)
 	return token.SignedString([]byte(secret))
 }
 
-func (s *TokenService) ValidateAccessToken(tokenString string) (*JwtCustomClaims, error) {
+func (s *TokenService) ValidateAccessToken(tokenString string) (*helper.JwtCustomClaims, error) {
 	return s.validateToken(tokenString, s.cfg.AccessSecret)
 }
 
-func (s *TokenService) ValidateRefreshToken(tokenString string) (*JwtCustomClaims, error) {
+func (s *TokenService) ValidateRefreshToken(tokenString string) (*helper.JwtCustomClaims, error) {
 	return s.validateToken(tokenString, s.cfg.RefreshSecret)
 }
 
-func (s *TokenService) validateToken(tokenString, secret string) (*JwtCustomClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &JwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+func (s *TokenService) validateToken(tokenString, secret string) (*helper.JwtCustomClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &helper.JwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	claims, ok := token.Claims.(*JwtCustomClaims)
+	claims, ok := token.Claims.(*helper.JwtCustomClaims)
 	if !ok || !token.Valid {
 		return nil, errors.New("failed to parse token claims")
 	}
