@@ -77,6 +77,9 @@ func (suite *TokenServiceTestSuite) TestGenerateAccessToken() {
 
 	got := claims.ID
 	assert.Equal(suite.T(), userID, got)
+
+	expireTime := time.Unix(claims.ExpiresAt, 0)
+	assert.WithinDuration(suite.T(), time.Now().Add(time.Minute*time.Duration(suite.cfg.AccessLifetimeMinutes)), expireTime, time.Second)
 }
 
 func (suite *TokenServiceTestSuite) TestValidateAccessToken() {
