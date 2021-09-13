@@ -29,6 +29,9 @@ func (suite *TokenServiceTestSuite) SetupSuite() {
 	suite.tokenService = NewTokenService(suite.cfg)
 }
 
+func (suite *TokenServiceTestSuite) TearDownSuite() {
+}
+
 func (suite *TokenServiceTestSuite) SetupTest() {
 }
 
