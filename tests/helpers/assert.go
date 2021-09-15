@@ -29,9 +29,9 @@ func AssertUserProfileResponse(t *testing.T, recorder *httptest.ResponseRecorder
 
 	if assert.NoError(t, err) {
 		assert.Equal(t, responses.UserResponse{
-			ID:       1,
-			Email:    "test-1@example.com",
-			Name:     "Test User 1",
+			ID:    1,
+			Email: "test-1@example.com",
+			Name:  "Test User 1",
 		}, response)
 	}
 }

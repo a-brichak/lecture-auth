@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -17,17 +18,20 @@ type UserHandlerTestSuite struct {
 	suite.Suite
 	accessToken string
 	userHandler *UserHandler
+	testSrv     *httptest.Server
 }
 
 func (suite *UserHandlerTestSuite) SetupSuite() {
 	cfg := &config.Config{
-		AccessSecret:           "access",
-		AccessLifetimeMinutes:  1,
+		AccessSecret:          "access",
+		AccessLifetimeMinutes: 1,
 	}
 	tokenService := services.NewTokenService(cfg)
 
 	suite.userHandler = NewUserHandler(tokenService, repositories.NewUserRepositoryMock())
 	suite.accessToken, _ = tokenService.GenerateAccessToken(userID)
+
+	suite.testSrv = Start()
 }
 
 func TestUserHandlerTestSuite(t *testing.T) {
@@ -76,6 +80,33 @@ func (suite *UserHandlerTestSuite) TestWalkUserHandlerGetProfile() {
 				if recorder.Code == http.StatusOK {
 					helpers.AssertUserProfileResponse(t, recorder)
 				}
+			}
+		})
+	}
+}
+
+func (suite *UserHandlerTestSuite) TestWalkApiGetProfile() {
+	t := suite.T()
+	cases := []helpers.TestCaseHandler{
+		{
+			TestName: "Successfully get user profile",
+			Request: helpers.Request{
+				Method:    http.MethodGet,
+				Url:       "/profile",
+				AuthToken: suite.accessToken,
+			},
+			Want: helpers.ExpectedResponse{
+				StatusCode: 200,
+				BodyPart:   "test-1@example.com",
+			},
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.TestName, func(t *testing.T) {
+			resp, err := suite.testSrv.Client().Get(suite.testSrv.URL + test.Request.Url)
+			if assert.NoError(t, err) {
+				assert.Equal(t, test.Want.StatusCode, resp.StatusCode)
 			}
 		})
 	}

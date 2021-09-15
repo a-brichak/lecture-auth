@@ -16,8 +16,9 @@ func Start(cfg *config.Config) {
 	authHandler := handlers.NewAuthHandler(cfg)
 	userHandler := handlers.NewUserHandler(tokenService, userRepository)
 
-	http.HandleFunc("/login", authHandler.Login)
-	http.HandleFunc("/profile", userHandler.GetProfile)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/login", authHandler.Login)
+	mux.HandleFunc("/profile", userHandler.GetProfile)
 
-	log.Fatal(http.ListenAndServe(cfg.Port, nil))
+	log.Fatal(http.ListenAndServe(cfg.Port, mux))
 }

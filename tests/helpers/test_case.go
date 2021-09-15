@@ -35,7 +35,7 @@ type TestCaseHandler struct {
 	TestName    string
 	Request     Request
 	HandlerFunc func(w http.ResponseWriter, r *http.Request)
-	Want    ExpectedResponse
+	Want        ExpectedResponse
 }
 
 func PrepareHandlerTestCase(test TestCaseHandler) (request *http.Request, recorder *httptest.ResponseRecorder) {

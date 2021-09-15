@@ -20,8 +20,13 @@ type Config struct {
 	RefreshLifetimeMinutes int
 }
 
-func NewConfig() *Config {
-	err := godotenv.Load()
+func NewConfig(forTesting bool) *Config {
+	envName := ".env"
+	if forTesting {
+		envName = "./../../.env.testing"
+	}
+
+	err := godotenv.Load(envName)
 	if err != nil {
 		log.Println("Error loading .env file")
 	}
